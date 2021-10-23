@@ -1,8 +1,8 @@
-﻿namespace Api.Utilities.Constants
+﻿namespace Api.Utilities
 {
-	public static class Constant : object
+	public static class Constants : object
 	{
-		static Constant()
+		static Constants()
 		{
 		}
 

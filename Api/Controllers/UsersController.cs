@@ -1,4 +1,6 @@
-﻿namespace Api.Controllers
+﻿using Dtat.Results;
+
+namespace Api.Controllers
 {
 	/// <summary>
 	/// 
@@ -31,32 +33,43 @@
 		/// <param name="viewModel"></param>
 		/// <returns></returns>
 		[Microsoft.AspNetCore.Mvc.ProducesResponseType
-			(type: typeof(ViewModels.Users.LoginResponseViewModel),
+			(type: typeof(Dtat.Results.Result<ViewModels.Users.LoginResponseViewModel>),
 			statusCode: Microsoft.AspNetCore.Http.StatusCodes.Status200OK)]
 
 		[Microsoft.AspNetCore.Mvc.ProducesResponseType
-			(type: typeof(string), statusCode: Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest)]
+			(type: typeof(Dtat.Results.Result<string>),
+			statusCode: Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest)]
 		#endregion /Document
 		[Microsoft.AspNetCore.Mvc.HttpPost(template: "login")]
 		public async
 			System.Threading.Tasks.Task
 			<Microsoft.AspNetCore.Mvc.ActionResult
-			<ViewModels.Users.LoginResponseViewModel>>
+			<Dtat.Results.Result<ViewModels.Users.LoginResponseViewModel>>>
 			LoginAsync(ViewModels.Users.LoginRequestViewModel viewModel)
 		{
-			var response =
+			var returnValue = new FluentResults.Result
+				<ViewModels.Users.LoginResponseViewModel>();
+
+			var result =
 				await UsersService.LoginAsync(viewModel: viewModel);
 
-			if (response is null)
+			if (result is null)
 			{
 				string errorMessage = string.Format
 					(Resources.Messages.Errors.InvalidInformations,
-					Resources.DataDictionary.Username, Resources.DataDictionary.Password);
+					Resources.DataDictionary.Username,
+					Resources.DataDictionary.Password);
 
-				return BadRequest(error: errorMessage);
+				returnValue.WithError(errorMessage: errorMessage);
+
+				return BadRequest(returnValue.ConvertToDtatResult());
 			}
+			else
+			{
+				returnValue.WithValue(value: result);
 
-			return Ok(value: response);
+				return Ok(value: returnValue.ConvertToDtatResult());
+			}
 		}
 		#endregion /Login Async
 
@@ -67,27 +80,34 @@
 		/// </summary>
 		/// <returns></returns>
 		[Microsoft.AspNetCore.Mvc.ProducesResponseType
-			(type: typeof(System.Collections.Generic.IList<Models.User>),
+			(type: typeof(Dtat.Results.Result<System.Collections.Generic.IList<Models.User>>),
 			statusCode: Microsoft.AspNetCore.Http.StatusCodes.Status200OK)]
 
 		[Microsoft.AspNetCore.Mvc.ProducesResponseType
 			(statusCode: Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized)]
 		#endregion /Document
-		[Jwt.Utilities.Attributes.Authorize(roles:
-			Utilities.Constants.Constant.UserType.Owner +
-			Utilities.Constants.Constant.UserType.Developer)]
+		// Strongly Typed: Adminstrator, Develper...
+		[Jwt.Utilities.Attributes.Authorize
+			(roles: Utilities.Constants.UserType.Owner
+			+ Utilities.Constants.UserType.Developer)]
 
 		[Microsoft.AspNetCore.Mvc.HttpGet]
 		public async
 			System.Threading.Tasks.Task
 			<Microsoft.AspNetCore.Mvc.ActionResult
-			<System.Collections.Generic.IList<Models.User>>>
+			<Dtat.Results.Result
+			<System.Collections.Generic.IList<Models.User>>>>
 			GetAllAsync()
 		{
-			var response =
+			var returnValue = new FluentResults.Result
+				<System.Collections.Generic.IList<Models.User>>();
+
+			var result =
 				await UsersService.GetAllAsync();
 
-			return Ok(value: response);
+			returnValue.WithValue(value: result);
+
+			return Ok(value: returnValue.ConvertToDtatResult());
 		}
 		#endregion Get All Async
 
@@ -99,45 +119,80 @@
 		/// <param name="id"></param>
 		/// <returns></returns>
 		[Microsoft.AspNetCore.Mvc.ProducesResponseType
-			(type: typeof(Models.User),
+			(type: typeof(Dtat.Results.Result<Models.User>),
 			statusCode: Microsoft.AspNetCore.Http.StatusCodes.Status200OK)]
 
 		[Microsoft.AspNetCore.Mvc.ProducesResponseType
-			(type: typeof(string),
+			(type: typeof(Dtat.Results.Result<string>),
 			statusCode: Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest)]
 
 		[Microsoft.AspNetCore.Mvc.ProducesResponseType
 			(statusCode: Microsoft.AspNetCore.Http.StatusCodes.Status401Unauthorized)]
 		#endregion /Document
 		// Strongly Typed: Adminstrator, Develper...
-		[Jwt.Utilities.Attributes.Authorize(roles:
-			Utilities.Constants.Constant.UserType.Owner +
-			Utilities.Constants.Constant.UserType.Developer +
-			Utilities.Constants.Constant.UserType.Administrator)]
+		[Jwt.Utilities.Attributes.Authorize
+			(roles: Utilities.Constants.UserType.Owner
+			+ Utilities.Constants.UserType.Developer +
+			Utilities.Constants.UserType.Administrator)]
 
 		[Microsoft.AspNetCore.Mvc.HttpGet(template: "{id?}")]
 		public async
 			System.Threading.Tasks.Task
 			<Microsoft.AspNetCore.Mvc.ActionResult
-			<System.Collections.Generic.IList<Models.User>>>
+			<Dtat.Results.Result
+			<System.Collections.Generic.IList<Models.User>>>>
 			GetByIdAsync(int? id)
 		{
+			var returnValue =
+				new FluentResults.Result<Models.User>();
+
 			if (id.HasValue is false)
 			{
 				string errorMessage = string.Format
 					(Resources.Messages.Validations.ArgumentNullException,
 					Resources.DataDictionary.Id);
 
-				return BadRequest(error: errorMessage);
+				returnValue.WithError(errorMessage: errorMessage);
+
+				return BadRequest(error: returnValue.ConvertToDtatResult());
 			}
 			else
 			{
-				var response =
+				var result =
 					await UsersService.GetByIdAsync(id: id.Value);
 
-				return Ok(value: response);
+				returnValue.WithValue(value: result);
+
+				return Ok(value: returnValue.ConvertToDtatResult());
 			}
 		}
 		#endregion Get By Id Async
 	}
 }
+
+/*
+{
+	"username": "Username1",
+	"password": "1234512345"
+}
+
+{
+	"username": "Username2",
+	"password": "1234512345"
+}
+
+{
+	"username": "Username3",
+	"password": "1234512345"
+}
+
+{
+	"username": "Username4",
+	"password": "1234512345"
+}
+
+{
+	"username": "Username5",
+	"password": "1234512345"
+}
+ */

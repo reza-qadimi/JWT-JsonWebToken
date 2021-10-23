@@ -26,7 +26,7 @@ namespace Jwt.Services
 								Username = $"Username{ index }",
 								LastName = $"Last Name { index }",
 								FirstName = $"First Name { index }",
-								EmailAddress = $"Sample{ index }@Gmail.com",
+								EmailAddress = $"Example{ index }@Gmail.com",
 							};
 
 						switch (index)
